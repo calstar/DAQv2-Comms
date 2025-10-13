@@ -1,7 +1,7 @@
 # .gitignore file created for free with Tower (https://www.git-tower.com/)
 # For suggestions or improvements please contact us using support@git-tower.com
 # Generated on 2025-10-13
-# Includes: clion, vscode
+# Includes: clion, vscode, git
 
 ### Universal ###
 # Common files that should be ignored in all projects
@@ -66,3 +66,46 @@ cmake-build-*/
 .vscode/sftp.json
 .vscode/tags
 .devcontainer/
+
+### Git ###
+# Git version control system files and directories
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+.git-rewrite/
+/.git-credentials
+.git-blame-ignore-revs
+*.git
+.gitkeep
+
+.git-old/
+.gitconfig
+.github/
+.gitreview
+.gitk
+
+.gitstats
+.gitchangelog.rc
+.git-blame*
+.git-rewrite/
+.gitmessage
+
+.gitflow
+git.properties
+.git-blame-ignore
+.gitkeep
+.gitattributes.local
+
+.git/lfs/
+.git-crypt/
+.gitflow.default
+.gitlint
+.gitversion
+
+.gitsecret/
+.git/hooks/
+.git-credentials.local
