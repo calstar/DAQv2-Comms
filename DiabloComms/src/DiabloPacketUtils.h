@@ -2,7 +2,9 @@
 
 #include "DiabloEnums.h"   // For enums like PacketType
 #include "DiabloPackets.h" // For all packet data structures
-#include <Arduino.h>       // For standard types like size_t
+#include <Arduino.h>       // ESP32 Arduino core for standard library support
+#include <stdint.h>        // For standard integer types
+#include <vector>          // For std::vector
 
 namespace Diablo {
 
@@ -33,19 +35,20 @@ size_t create_board_heartbeat_packet(const BoardHeartbeatPacket &data,
 /**
  * @brief Creates a complete Sensor Data packet in the provided buffer.
  *
- * This is a variable-size packet containing readings from one or more sensors.
- * It consists of a header, a fixed-size body specifying the number of sensors,
- * followed by the actual sensor data points.
+ * This is a variable-size packet containing readings from one or more sensor
+ * data chunks. It consists of a header, a fixed-size body specifying the number
+ * of chunks and sensors, followed by the actual sensor data chunks and their
+ * datapoints.
  *
- * @param sensor_data A pointer to an array of SensorDatapoint structs.
- * @param num_sensors The number of elements in the sensor_data array.
+ * @param chunks A vector of SensorDataChunkCollection structs containing the
+ * sensor data.
  * @param buffer The output buffer to write the final packet into.
  * @param buffer_size The total size of the output buffer.
  * @return The total number of bytes written to the buffer, or 0 on error.
  */
-size_t create_sensor_data_packet(const SensorDatapoint *sensor_data,
-                                 uint8_t num_sensors, uint8_t *buffer,
-                                 size_t buffer_size);
+size_t
+create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &chunks,
+                          uint8_t *buffer, size_t buffer_size);
 
 /**
  * @brief Creates a simple Abort Done packet.

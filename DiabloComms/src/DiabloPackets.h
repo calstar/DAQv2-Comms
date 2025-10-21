@@ -75,6 +75,83 @@ struct __attribute__((packed)) SensorDatapoint {
   uint32_t data;     // The sensor value
 };
 
+//-----------------------------------------------------------------------------
+// High-Level Data Collection Structures
+//-----------------------------------------------------------------------------
+// This structure is used for collecting and managing sensor data before
+// serializing into network packets. It provides a higher-level interface
+// for data collection compared to the packed network structures above.
+
+/**
+ * @brief Represents a single data chunk with timestamp and sensor datapoints.
+ *
+ * This struct represents one data chunk containing a timestamp and an array
+ * of sensor readings. It's used for collecting sensor data before serializing
+ * into network packets.
+ *
+ * @note This is NOT a packed struct as it's used for data collection,
+ *       not network transmission. Use the packed SensorDataChunk for network
+ * packets.
+ */
+struct SensorDataChunkCollection {
+  static const uint8_t MAX_DATAPOINTS_PER_CHUNK =
+      16; // Maximum number of datapoints per chunk
+
+  uint32_t timestamp; // Timestamp for this data chunk
+  SensorDatapoint
+      datapoints[MAX_DATAPOINTS_PER_CHUNK]; // Array of sensor readings
+  uint8_t num_datapoints;                   // Current number of datapoints
+
+  /**
+   * @brief Default constructor
+   */
+  SensorDataChunkCollection() : timestamp(0), num_datapoints(0) {}
+
+  /**
+   * @brief Constructor with timestamp
+   * @param ts The timestamp for this data chunk
+   */
+  SensorDataChunkCollection(uint32_t ts) : timestamp(ts), num_datapoints(0) {}
+
+  /**
+   * @brief Add a sensor datapoint to this chunk
+   * @param sensor_id The ID of the sensor
+   * @param data The sensor reading value
+   * @return True if successfully added, false if array is full
+   */
+  bool add_datapoint(uint8_t sensor_id, uint32_t data) {
+    if (num_datapoints >= MAX_DATAPOINTS_PER_CHUNK) {
+      return false; // Array is full
+    }
+    datapoints[num_datapoints] = {sensor_id, data};
+    num_datapoints++;
+    return true;
+  }
+
+  /**
+   * @brief Get the number of datapoints in this chunk
+   * @return The number of datapoints
+   */
+  uint8_t size() const { return num_datapoints; }
+
+  /**
+   * @brief Check if the chunk is empty
+   * @return True if no datapoints, false otherwise
+   */
+  bool empty() const { return num_datapoints == 0; }
+
+  /**
+   * @brief Check if the chunk is full
+   * @return True if at maximum capacity, false otherwise
+   */
+  bool full() const { return num_datapoints >= MAX_DATAPOINTS_PER_CHUNK; }
+
+  /**
+   * @brief Clear all datapoints from this chunk
+   */
+  void clear() { num_datapoints = 0; }
+};
+
 //==============================================================================
 // Actuator Command
 //==============================================================================
