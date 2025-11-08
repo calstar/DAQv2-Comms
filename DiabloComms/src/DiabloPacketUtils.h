@@ -65,4 +65,64 @@ size_t create_abort_done_packet(uint8_t *buffer, size_t buffer_size);
 
 // Add declarations for other packets the boards will create...
 
+/**
+ * @brief Creates a complete Actuator Command packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + ActuatorCommandPacket + N ActuatorCommand.
+ *
+ * @param commands The list of actuator commands to serialize.
+ * @param buffer The output buffer to write the packet into.
+ * @param buffer_size The size of the provided buffer.
+ * @return The total size of the created packet, or 0 on error.
+ */
+size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &commands,
+                                      uint8_t *buffer, size_t buffer_size);
+
+//==============================================================================
+// PACKET DESERIALIZATION (uint8_t* Buffer -> Struct)
+//==============================================================================
+
+/**
+ * @brief Parses a Board Heartbeat packet from buffer.
+ * @return true on success, false on error (size/type mismatch).
+ */
+bool parse_board_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
+                                  PacketHeader &header_out,
+                                  BoardHeartbeatPacket &data_out);
+
+/**
+ * @brief Parses a Sensor Data packet from buffer into chunk collections.
+ * @return true on success, false on error.
+ */
+bool parse_sensor_data_packet(const uint8_t *buffer, size_t buffer_size,
+                              PacketHeader &header_out,
+                              std::vector<SensorDataChunkCollection> &chunks_out);
+
+/**
+ * @brief Parses an Abort Done packet from buffer.
+ * @return true on success, false on error.
+ */
+bool parse_abort_done_packet(const uint8_t *buffer, size_t buffer_size,
+                             PacketHeader &header_out);
+
+/**
+ * @brief Parses an Actuator Command packet from buffer.
+ * @return true on success, false on error.
+ */
+bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
+                                   PacketHeader &header_out,
+                                   std::vector<ActuatorCommand> &commands_out);
+
+/**
+ * @brief Creates a complete Actuator Abort Configuration packet in the provided buffer.
+ * 
+ * Packet layout: PacketHeader + ActuatorConfigPacket + AbortActuatorLocations + AbortPTLocations.
+ * Locations and purposes are hardcoded config.
+ *
+ * @param buffer The output buffer to write the packet into.
+ * @param buffer_size The size of the provided buffer.
+ * @return The total size of the created packet, or 0 on error.
+ */
+size_t create_actuator_abort_packet(uint8_t *buffer, size_t buffer_size);
+
 } // namespace Diablo

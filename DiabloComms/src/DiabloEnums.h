@@ -54,4 +54,20 @@ enum class EngineState : uint8_t {
   FIRING = 3,
   POST_FIRE = 4
 };
+
+// TODO: Configure these enums based on actual system design
+enum class ActuatorPurpose : uint8_t {
+  MAIN_VALVE = 1,
+  ABORT_VALVE = 2,
+  DUMP_VALVE = 3,
+  OTHER = 255
+};
+
+enum class PTPurpose : uint8_t {
+  LOX_PRESSURE = 1,
+  FUEL_PRESSURE = 2,
+  CHAMBER_PRESSURE = 3,
+  OTHER = 255
+};
+
 } // namespace Diablo

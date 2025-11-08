@@ -2,6 +2,7 @@
 
 #include "DiabloEnums.h"
 #include <stdint.h>
+#include <vector>
 
 namespace Diablo {
 
@@ -22,9 +23,10 @@ struct __attribute__((packed)) PacketHeader {
  * @brief Body of a Board Heartbeat packet. Sent from a board to the server.
  */
 struct __attribute__((packed)) BoardHeartbeatPacket {
-  BoardType board_type;
-  uint8_t engine_state;
-  BoardState board_state;
+    BoardType board_type;
+	  uint8_t board_id;
+    EngineState engine_state;
+    BoardState board_state;
 };
 
 //==============================================================================
@@ -85,8 +87,8 @@ struct __attribute__((packed)) SensorDatapoint {
 /**
  * @brief Represents a single data chunk with timestamp and sensor datapoints.
  *
- * This struct represents one data chunk containing a timestamp and an array
- * of sensor readings. It's used for collecting sensor data before serializing
+ * This struct represents one data chunk containing a timestamp and a vector with
+ * num_sensors datapoints. It's used for collecting sensor data before serializing
  * into network packets.
  *
  * @note This is NOT a packed struct as it's used for data collection,
@@ -94,24 +96,16 @@ struct __attribute__((packed)) SensorDatapoint {
  * packets.
  */
 struct SensorDataChunkCollection {
-  static const uint8_t MAX_DATAPOINTS_PER_CHUNK =
-      16; // Maximum number of datapoints per chunk
-
   uint32_t timestamp; // Timestamp for this data chunk
-  SensorDatapoint
-      datapoints[MAX_DATAPOINTS_PER_CHUNK]; // Array of sensor readings
-  uint8_t num_datapoints;                   // Current number of datapoints
-
-  /**
-   * @brief Default constructor
-   */
-  SensorDataChunkCollection() : timestamp(0), num_datapoints(0) {}
+  std::vector<SensorDatapoint> datapoints;
+  uint8_t num_sensors;
 
   /**
    * @brief Constructor with timestamp
    * @param ts The timestamp for this data chunk
+   * @param num_sensors The number of sensor datapoints for this chunk
    */
-  SensorDataChunkCollection(uint32_t ts) : timestamp(ts), num_datapoints(0) {}
+  SensorDataChunkCollection(uint32_t ts, uint8_t num_sensors) : timestamp(ts), num_sensors(num_sensors) {}
 
   /**
    * @brief Add a sensor datapoint to this chunk
@@ -120,11 +114,10 @@ struct SensorDataChunkCollection {
    * @return True if successfully added, false if array is full
    */
   bool add_datapoint(uint8_t sensor_id, uint32_t data) {
-    if (num_datapoints >= MAX_DATAPOINTS_PER_CHUNK) {
+    if (datapoints.size() >= num_sensors) {
       return false; // Array is full
     }
-    datapoints[num_datapoints] = {sensor_id, data};
-    num_datapoints++;
+    datapoints.push_back({sensor_id, data});
     return true;
   }
 
@@ -132,37 +125,29 @@ struct SensorDataChunkCollection {
    * @brief Get the number of datapoints in this chunk
    * @return The number of datapoints
    */
-  uint8_t size() const { return num_datapoints; }
+  size_t size() const { return datapoints.size(); }
 
   /**
    * @brief Check if the chunk is empty
    * @return True if no datapoints, false otherwise
    */
-  bool empty() const { return num_datapoints == 0; }
+  bool empty() const { return datapoints.empty(); }
 
   /**
    * @brief Check if the chunk is full
    * @return True if at maximum capacity, false otherwise
    */
-  bool full() const { return num_datapoints >= MAX_DATAPOINTS_PER_CHUNK; }
+  bool full() const { return datapoints.size() >= num_sensors; }
 
   /**
    * @brief Clear all datapoints from this chunk
    */
-  void clear() { num_datapoints = 0; }
+  void clear() { datapoints.clear(); }
 };
 
 //==============================================================================
 // Actuator Command
 //==============================================================================
-
-/**
- * @brief Represents a command for a single actuator.
- */
-struct __attribute__((packed)) ActuatorCommand {
-  uint8_t actuator_id;
-  uint8_t actuator_state;
-};
 
 /**
  * @brief Body of an Actuator Command packet.
@@ -174,12 +159,36 @@ struct __attribute__((packed)) ActuatorCommandPacket {
 };
 
 /**
+ * @brief Represents a command for a single actuator.
+ */
+struct __attribute__((packed)) ActuatorCommand {
+  uint8_t actuator_id;
+  uint8_t actuator_state;
+};
+
+//==============================================================================
+// Actuator Config (Abort)
+//==============================================================================
+
+/**
+ * @brief Body of an Actuator Config packet for abort configuration.
+ *
+ * Layout:
+ * - is_abort_controller (1 byte)
+ * - Followed by NUM_ABORT_ACTUATOR_LOCATIONS AbortActuatorLocation entries (6 bytes each)
+ * - Followed by NUM_ABORT_PT_LOCATIONS AbortPTLocation entries (6 bytes each)
+ */
+struct __attribute__((packed)) ActuatorConfigPacket {
+  uint8_t is_abort_controller;     // 1 if this board is the abort controller
+};
+
+/**
  * @brief Defines the location of an actuator needed for an abort sequence.
  */
 struct __attribute__((packed)) AbortActuatorLocation {
-  uint32_t ip_address;
+  uint32_t ip_address; // TODO: change based on IP representation; Google AI Overview mentions inet_pton for conversion
   uint8_t actuator_id;
-  uint8_t purpose_id; // "What is it for?"
+  ActuatorPurpose purpose_id; // Identify actuator purpose for proper abort
 };
 
 /**
@@ -189,6 +198,6 @@ struct __attribute__((packed)) AbortActuatorLocation {
 struct __attribute__((packed)) AbortPTLocation {
   uint32_t ip_address;
   uint8_t sensor_id;
-  uint8_t purpose_id; // "What is it for?"
+  PTPurpose purpose_id; // Identify pressure transducer purpose for proper abort
 };
 } // namespace Diablo
