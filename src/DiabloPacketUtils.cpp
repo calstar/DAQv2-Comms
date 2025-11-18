@@ -1,4 +1,5 @@
 #include "DiabloPacketUtils.h"
+#include "DAQv2-Comms.h"
 #include <cstring> // For memcpy
 #include <cstddef> // For size_t
 

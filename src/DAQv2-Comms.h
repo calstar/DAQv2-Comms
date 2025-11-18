@@ -3,7 +3,7 @@
 #include <Arduino.h>
 
 // Version information
-#define DIABLO_COMMS_VERSION "0" // TODO: should this be decimal? our version in header is one byte
+#define DIABLO_COMMS_VERSION 0 // Protocol version (uint8_t)
 
 // Maximum values
 #define MAX_SENSORS_PER_BOARD 10
