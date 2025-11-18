@@ -16,6 +16,8 @@
 #define NUM_ABORT_PT_LOCATIONS 4
 
 // Include all other headers
-#include "DiabloDefs.h"
+#include "DiabloEnums.h"
+#include "DiabloPackets.h"
+#include "DiabloPacketUtils.h"
 
 
