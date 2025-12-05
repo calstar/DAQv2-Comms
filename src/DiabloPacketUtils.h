@@ -91,6 +91,14 @@ bool parse_board_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
                                   BoardHeartbeatPacket &data_out);
 
 /**
+ * @brief Parses a Server Heartbeat packet from buffer.
+ * @return true on success, false on error (size/type mismatch).
+ */
+bool parse_server_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
+                                    PacketHeader &header_out,
+                                    ServerHeartbeatPacket &data_out);
+
+/**
  * @brief Parses a Sensor Data packet from buffer into chunk collections.
  * @return true on success, false on error.
  */

@@ -169,6 +169,25 @@ bool parse_board_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
   return true;
 }
 
+bool parse_server_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
+                                    PacketHeader &header_out,
+                                    ServerHeartbeatPacket &data_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(ServerHeartbeatPacket);
+  const size_t total_size = header_size + body_size;
+  if (!buffer || buffer_size < total_size) return false;
+
+  // Read header
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::SERVER_HEARTBEAT) return false;
+
+  // Read body
+  memcpy(&data_out, buffer + header_size, body_size);
+  header_out = hdr;
+  return true;
+}
+
 bool parse_sensor_data_packet(const uint8_t *buffer, size_t buffer_size,
                               PacketHeader &header_out,
                               std::vector<SensorDataChunkCollection> &chunks_out) {
