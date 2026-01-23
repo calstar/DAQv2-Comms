@@ -42,12 +42,13 @@ size_t create_board_heartbeat_packet(const BoardHeartbeatPacket &data,
  *
  * @param chunks A vector of SensorDataChunkCollection structs containing the
  * sensor data.
+ * @param num_sensors The number of sensors that are included in the packet
  * @param buffer The output buffer to write the final packet into.
  * @param buffer_size The total size of the output buffer.
  * @return The total number of bytes written to the buffer, or 0 on error.
  */
 size_t
-create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &chunks,
+create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &chunks, const uint8_t num_sensors,
                           uint8_t *buffer, size_t buffer_size);
 
 /**
