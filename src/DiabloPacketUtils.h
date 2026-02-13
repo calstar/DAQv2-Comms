@@ -123,6 +123,27 @@ bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
                                    std::vector<ActuatorCommand> &commands_out);
 
 /**
+ * @brief Creates a complete PWM Actuator Command packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + PWMActuatorCommandPacket + N PWMActuatorCommand.
+ *
+ * @param commands The list of PWM actuator commands to serialize.
+ * @param buffer The output buffer to write the packet into.
+ * @param buffer_size The size of the provided buffer.
+ * @return The total size of the created packet, or 0 on error.
+ */
+size_t create_pwm_actuator_packet(const std::vector<PWMActuatorCommand> &commands,
+                                  uint8_t *buffer, size_t buffer_size);
+
+/**
+ * @brief Parses a PWM Actuator Command packet from buffer.
+ * @return true on success, false on error.
+ */
+bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
+                               PacketHeader &header_out,
+                               std::vector<PWMActuatorCommand> &commands_out);
+
+/**
  * @brief Creates a complete Actuator Abort Configuration packet in the provided buffer.
  * 
  * Packet layout: PacketHeader + ActuatorConfigPacket + AbortActuatorLocations + AbortPTLocations.

@@ -166,6 +166,25 @@ struct __attribute__((packed)) ActuatorCommand {
   uint8_t actuator_state;
 };
 
+/**
+ * @brief Body of a PWM Actuator Command packet.
+ * @note The actual packet will have this struct followed by N PWMActuatorCommands.
+ */
+struct __attribute__((packed)) PWMActuatorCommandPacket {
+  uint8_t num_commands;
+  // Followed by 'num_commands' instances of PWMActuatorCommand
+};
+
+/**
+ * @brief Represents a PWM command for a single actuator.
+ */
+struct __attribute__((packed)) PWMActuatorCommand {
+  uint8_t actuator_id;
+  uint32_t duration;   // Duration in milliseconds
+  float duty_cycle;    // Duty cycle in percentage (0.0 - 1.0)
+  float frequency;     // Frequency in Hz
+};
+
 //==============================================================================
 // Actuator Config (Abort)
 //==============================================================================

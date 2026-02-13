@@ -276,4 +276,75 @@ bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
   return true;
 }
 
+size_t create_pwm_actuator_packet(const std::vector<PWMActuatorCommand> &commands,
+                                  uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(PWMActuatorCommandPacket);
+  const size_t num_commands = commands.size();
+
+  if (num_commands > 255 || num_commands == 0) {
+    return 0; // num_commands must be between 1 and 255
+  }
+
+  const size_t commands_bytes = num_commands * sizeof(PWMActuatorCommand);
+  const size_t total_size = header_size + body_size + commands_bytes;
+
+  if (buffer_size < total_size) {
+    return 0; // Buffer too small
+  }
+
+  // Header
+  PacketHeader header;
+  header.packet_type = PacketType::PWM_ACTUATOR_COMMAND;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = millis();
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+
+  // Body
+  PWMActuatorCommandPacket body;
+  body.num_commands = static_cast<uint8_t>(num_commands);
+  memcpy(ptr, &body, body_size);
+  ptr += body_size;
+
+  // Commands array
+  if (num_commands) {
+    memcpy(ptr, commands.data(), commands_bytes);
+  }
+
+  return total_size;
+}
+
+bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
+                               PacketHeader &header_out,
+                               std::vector<PWMActuatorCommand> &commands_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(PWMActuatorCommandPacket);
+  if (!buffer || buffer_size < header_size + body_size) return false;
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::PWM_ACTUATOR_COMMAND) return false;
+
+  const uint8_t *ptr = buffer + header_size;
+  PWMActuatorCommandPacket body;
+  memcpy(&body, ptr, body_size);
+  ptr += body_size;
+
+  const size_t commands_bytes = static_cast<size_t>(body.num_commands) * sizeof(PWMActuatorCommand);
+  const size_t expected_size = header_size + body_size + commands_bytes;
+  if (buffer_size < expected_size) return false;
+
+  commands_out.clear();
+  if (body.num_commands) {
+    commands_out.resize(body.num_commands);
+    memcpy(commands_out.data(), ptr, commands_bytes);
+  }
+
+  header_out = hdr;
+  return true;
+}
+
 } // namespace Diablo
