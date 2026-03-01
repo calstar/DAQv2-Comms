@@ -148,11 +148,11 @@ bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
  *
  * Packet layout: standard PacketHeader (ACTUATOR_CONFIG, version, timestamp),
  * then config body: is_abort_controller (1B), N (1B), N x AbortActuatorLocation (7B each),
- * then X (1B), X x AbortPTLocation (6B each).
+ * then X (1B), X x AbortPTLocation (9B each).
  *
  * @param is_abort_controller 1 if this board is the abort controller, 0 otherwise.
  * @param abort_actuators List of abort actuator entries (N entries, 7 bytes each).
- * @param abort_pts List of abort PT entries (X entries, 6 bytes each).
+ * @param abort_pts List of abort PT entries (X entries, 9 bytes each).
  * @param buffer The output buffer to write the packet into.
  * @param buffer_size The size of the provided buffer.
  * @return The total size of the created packet, or 0 on error (e.g. buffer too small).

@@ -196,7 +196,7 @@ struct __attribute__((packed)) PWMActuatorCommand {
  * - This struct (2 bytes): is_abort_controller, num_abort_actuators (N)
  * - N x AbortActuatorLocation (7 bytes each)
  * - 1 byte: num_abort_pts (X)
- * - X x AbortPTLocation (6 bytes each)
+ * - X x AbortPTLocation (9 bytes each)
  */
 struct __attribute__((packed)) ActuatorConfigPacket {
   uint8_t is_abort_controller;  // 1 if this board is the abort controller, 0 otherwise
@@ -223,12 +223,12 @@ struct __attribute__((packed)) AbortPTSectionHeader {
 
 /**
  * @brief Defines the location of a pressure transducer needed for an abort
- * sequence, and its pressure threshold in PSI.
- * 6 bytes on wire: 4B IP + 1B sensor_id + 1B pressure_threshold_psi.
+ * sequence, and its pressure threshold as an ADC code.
+ * 9 bytes on wire: 4B IP + 1B sensor_id + 4B pressure_threshold_adc.
  */
 struct __attribute__((packed)) AbortPTLocation {
   uint32_t ip_address;
   uint8_t sensor_id;
-  uint8_t pressure_threshold_psi;  // Pressure threshold in PSI
+  uint32_t pressure_threshold_adc;  // Pressure threshold as ADC code
 };
 } // namespace Diablo
