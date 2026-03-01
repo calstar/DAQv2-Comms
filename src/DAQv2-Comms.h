@@ -11,9 +11,9 @@
 #define MAX_CHUNKS_PER_PACKET 10
 #define MAX_PACKET_SIZE 512
 
-// Hardcoded parameters
-#define NUM_ABORT_ACTUATOR_LOCATIONS 4
-#define NUM_ABORT_PT_LOCATIONS 4
+// Maximum counts for actuator config packet (used for buffer sizing and validation)
+#define MAX_ABORT_ACTUATORS 255
+#define MAX_ABORT_PTS 255
 
 // Include all other headers
 #include "DiabloEnums.h"

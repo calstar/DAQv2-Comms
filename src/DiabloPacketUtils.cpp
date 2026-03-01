@@ -347,4 +347,126 @@ bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
   return true;
 }
 
+size_t create_actuator_config_packet(
+    uint8_t is_abort_controller,
+    const std::vector<AbortActuatorLocation> &abort_actuators,
+    const std::vector<AbortPTLocation> &abort_pts,
+    uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t config_header_size = sizeof(ActuatorConfigPacket);
+  const size_t N = abort_actuators.size();
+  const size_t X = abort_pts.size();
+
+  if (N > MAX_ABORT_ACTUATORS || X > MAX_ABORT_PTS) {
+    return 0;
+  }
+
+  const size_t actuator_bytes = N * sizeof(AbortActuatorLocation);
+  const size_t pt_count_size = sizeof(AbortPTSectionHeader);
+  const size_t pt_entries_bytes = X * sizeof(AbortPTLocation);
+  const size_t body_size = config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes;
+  const size_t total_size = header_size + body_size;
+
+  if (buffer_size < total_size) {
+    return 0;
+  }
+
+  PacketHeader header;
+  header.packet_type = PacketType::ACTUATOR_CONFIG;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = millis();
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+
+  ActuatorConfigPacket config;
+  config.is_abort_controller = is_abort_controller;
+  config.num_abort_actuators = static_cast<uint8_t>(N);
+  memcpy(ptr, &config, config_header_size);
+  ptr += config_header_size;
+
+  if (N) {
+    memcpy(ptr, abort_actuators.data(), actuator_bytes);
+    ptr += actuator_bytes;
+  }
+
+  AbortPTSectionHeader pt_header;
+  pt_header.num_abort_pts = static_cast<uint8_t>(X);
+  memcpy(ptr, &pt_header, pt_count_size);
+  ptr += pt_count_size;
+
+  if (X) {
+    memcpy(ptr, abort_pts.data(), pt_entries_bytes);
+  }
+
+  return total_size;
+}
+
+bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
+                                  PacketHeader &header_out,
+                                  uint8_t &is_abort_controller_out,
+                                  std::vector<AbortActuatorLocation> &abort_actuators_out,
+                                  std::vector<AbortPTLocation> &abort_pts_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t config_header_size = sizeof(ActuatorConfigPacket);
+  const size_t pt_count_size = sizeof(AbortPTSectionHeader);
+
+  if (!buffer || buffer_size < header_size + config_header_size + pt_count_size) {
+    return false;
+  }
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::ACTUATOR_CONFIG) {
+    return false;
+  }
+
+  const uint8_t *ptr = buffer + header_size;
+  ActuatorConfigPacket config;
+  memcpy(&config, ptr, config_header_size);
+  ptr += config_header_size;
+
+  const size_t N = config.num_abort_actuators;
+  const size_t actuator_bytes = N * sizeof(AbortActuatorLocation);
+  const size_t min_size_after_config = actuator_bytes + pt_count_size;
+  if (buffer_size < header_size + config_header_size + min_size_after_config) {
+    return false;
+  }
+
+  abort_actuators_out.clear();
+  if (N > MAX_ABORT_ACTUATORS) {
+    return false;
+  }
+  if (N) {
+    abort_actuators_out.resize(N);
+    memcpy(abort_actuators_out.data(), ptr, actuator_bytes);
+    ptr += actuator_bytes;
+  }
+
+  AbortPTSectionHeader pt_header;
+  memcpy(&pt_header, ptr, pt_count_size);
+  ptr += pt_count_size;
+
+  const size_t X = pt_header.num_abort_pts;
+  const size_t pt_entries_bytes = X * sizeof(AbortPTLocation);
+  const size_t expected_total = header_size + config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes;
+  if (buffer_size < expected_total) {
+    return false;
+  }
+  if (X > MAX_ABORT_PTS) {
+    return false;
+  }
+
+  abort_pts_out.clear();
+  if (X) {
+    abort_pts_out.resize(X);
+    memcpy(abort_pts_out.data(), ptr, pt_entries_bytes);
+  }
+
+  is_abort_controller_out = config.is_abort_controller;
+  header_out = hdr;
+  return true;
+}
+
 } // namespace Diablo

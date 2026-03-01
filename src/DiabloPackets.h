@@ -190,33 +190,45 @@ struct __attribute__((packed)) PWMActuatorCommand {
 //==============================================================================
 
 /**
- * @brief Body of an Actuator Config packet for abort configuration.
+ * @brief Fixed-size header of an Actuator Config packet for abort configuration.
  *
- * Layout:
- * - is_abort_controller (1 byte)
- * - Followed by NUM_ABORT_ACTUATOR_LOCATIONS AbortActuatorLocation entries (6 bytes each)
- * - Followed by NUM_ABORT_PT_LOCATIONS AbortPTLocation entries (6 bytes each)
+ * Full packet layout (after standard PacketHeader):
+ * - This struct (2 bytes): is_abort_controller, num_abort_actuators (N)
+ * - N x AbortActuatorLocation (7 bytes each)
+ * - 1 byte: num_abort_pts (X)
+ * - X x AbortPTLocation (6 bytes each)
  */
 struct __attribute__((packed)) ActuatorConfigPacket {
-  uint8_t is_abort_controller;     // 1 if this board is the abort controller
+  uint8_t is_abort_controller;  // 1 if this board is the abort controller, 0 otherwise
+  uint8_t num_abort_actuators;   // N = number of abort actuator entries following
 };
 
 /**
- * @brief Defines the location of an actuator needed for an abort sequence.
+ * @brief Defines one abort actuator: location (IP), ID, vent state, and abort state.
+ * 7 bytes on wire: 4B IP + 1B actuator_id + 1B vent_state + 1B abort_state.
  */
 struct __attribute__((packed)) AbortActuatorLocation {
-  uint32_t ip_address; // TODO: change based on IP representation; Google AI Overview mentions inet_pton for conversion
+  uint32_t ip_address;   // IP address of the board where this actuator lives
   uint8_t actuator_id;
-  ActuatorPurpose purpose_id; // Identify actuator purpose for proper abort
+  uint8_t vent_state;    // 1 = on, 0 = off
+  uint8_t abort_state;   // 1 = on, 0 = off
+};
+
+/**
+ * @brief Single byte count of abort PT entries; appears after N actuator blocks.
+ */
+struct __attribute__((packed)) AbortPTSectionHeader {
+  uint8_t num_abort_pts;  // X = number of AbortPTLocation entries following
 };
 
 /**
  * @brief Defines the location of a pressure transducer needed for an abort
- * sequence.
+ * sequence, and its pressure threshold in PSI.
+ * 6 bytes on wire: 4B IP + 1B sensor_id + 1B pressure_threshold_psi.
  */
 struct __attribute__((packed)) AbortPTLocation {
   uint32_t ip_address;
   uint8_t sensor_id;
-  PTPurpose purpose_id; // Identify pressure transducer purpose for proper abort
+  uint8_t pressure_threshold_psi;  // Pressure threshold in PSI
 };
 } // namespace Diablo

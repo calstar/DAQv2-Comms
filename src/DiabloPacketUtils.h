@@ -144,15 +144,34 @@ bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
                                std::vector<PWMActuatorCommand> &commands_out);
 
 /**
- * @brief Creates a complete Actuator Abort Configuration packet in the provided buffer.
- * 
- * Packet layout: PacketHeader + ActuatorConfigPacket + AbortActuatorLocations + AbortPTLocations.
- * Locations and purposes are hardcoded config.
+ * @brief Creates a complete Actuator Config packet in the provided buffer.
  *
+ * Packet layout: standard PacketHeader (ACTUATOR_CONFIG, version, timestamp),
+ * then config body: is_abort_controller (1B), N (1B), N x AbortActuatorLocation (7B each),
+ * then X (1B), X x AbortPTLocation (6B each).
+ *
+ * @param is_abort_controller 1 if this board is the abort controller, 0 otherwise.
+ * @param abort_actuators List of abort actuator entries (N entries, 7 bytes each).
+ * @param abort_pts List of abort PT entries (X entries, 6 bytes each).
  * @param buffer The output buffer to write the packet into.
  * @param buffer_size The size of the provided buffer.
- * @return The total size of the created packet, or 0 on error.
+ * @return The total size of the created packet, or 0 on error (e.g. buffer too small).
  */
-size_t create_actuator_abort_packet(uint8_t *buffer, size_t buffer_size);
+size_t create_actuator_config_packet(
+    uint8_t is_abort_controller,
+    const std::vector<AbortActuatorLocation> &abort_actuators,
+    const std::vector<AbortPTLocation> &abort_pts,
+    uint8_t *buffer, size_t buffer_size);
+
+/**
+ * @brief Parses an Actuator Config packet from buffer.
+ * Reads standard PacketHeader (must be ACTUATOR_CONFIG), then config body into outputs.
+ * @return true on success, false on error (type/size mismatch or buffer too small).
+ */
+bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
+                                  PacketHeader &header_out,
+                                  uint8_t &is_abort_controller_out,
+                                  std::vector<AbortActuatorLocation> &abort_actuators_out,
+                                  std::vector<AbortPTLocation> &abort_pts_out);
 
 } // namespace Diablo
