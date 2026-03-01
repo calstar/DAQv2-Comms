@@ -138,8 +138,16 @@ inline std::vector<uint8_t> make_actuator_command(uint8_t version, uint32_t time
 // -----------------------------------------------------------------------------
 // 5. Sensor Config Packet
 // -----------------------------------------------------------------------------
+// Reference voltage (1 byte): 0 = internal 2.5V, 1 = VDD, 2 = 5V high precision
+enum class SensorConfigReferenceVoltage : uint8_t {
+    INTERNAL_2_5V = 0,
+    VDD = 1,
+    HIGH_PRECISION_5V = 2
+};
+
 inline std::vector<uint8_t> make_sensor_config(uint8_t version, uint32_t timestamp,
                                                const std::vector<uint8_t> &sensor_ids,
+                                               uint8_t reference_voltage,
                                                bool necessary_for_abort, uint32_t controller_ip = 0)
 {
     std::vector<uint8_t> pkt;
@@ -150,6 +158,8 @@ inline std::vector<uint8_t> make_sensor_config(uint8_t version, uint32_t timesta
 
     for (auto id : sensor_ids)
         append<uint8_t>(pkt, id);
+
+    append<uint8_t>(pkt, reference_voltage);
 
     append<uint8_t>(pkt, static_cast<uint8_t>(necessary_for_abort));
     if (necessary_for_abort)
