@@ -148,11 +148,12 @@ bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
  *
  * Packet layout: standard PacketHeader (ACTUATOR_CONFIG, version, timestamp),
  * then config body: is_abort_controller (1B), N (1B), N x AbortActuatorLocation (7B each),
- * then X (1B), X x AbortPTLocation (9B each).
+ * then X (1B), X x AbortPTLocation (9B each), then enable_serial_printing (1B).
  *
  * @param is_abort_controller 1 if this board is the abort controller, 0 otherwise.
  * @param abort_actuators List of abort actuator entries (N entries, 7 bytes each).
  * @param abort_pts List of abort PT entries (X entries, 9 bytes each).
+ * @param enable_serial_printing 1 to enable serial printing, 0 to disable.
  * @param buffer The output buffer to write the packet into.
  * @param buffer_size The size of the provided buffer.
  * @return The total size of the created packet, or 0 on error (e.g. buffer too small).
@@ -161,6 +162,7 @@ size_t create_actuator_config_packet(
     uint8_t is_abort_controller,
     const std::vector<AbortActuatorLocation> &abort_actuators,
     const std::vector<AbortPTLocation> &abort_pts,
+    uint8_t enable_serial_printing,
     uint8_t *buffer, size_t buffer_size);
 
 /**
@@ -172,6 +174,7 @@ bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
                                   PacketHeader &header_out,
                                   uint8_t &is_abort_controller_out,
                                   std::vector<AbortActuatorLocation> &abort_actuators_out,
-                                  std::vector<AbortPTLocation> &abort_pts_out);
+                                  std::vector<AbortPTLocation> &abort_pts_out,
+                                  uint8_t &enable_serial_printing_out);
 
 } // namespace Diablo

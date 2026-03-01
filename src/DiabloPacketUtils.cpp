@@ -351,6 +351,7 @@ size_t create_actuator_config_packet(
     uint8_t is_abort_controller,
     const std::vector<AbortActuatorLocation> &abort_actuators,
     const std::vector<AbortPTLocation> &abort_pts,
+    uint8_t enable_serial_printing,
     uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t config_header_size = sizeof(ActuatorConfigPacket);
@@ -364,7 +365,8 @@ size_t create_actuator_config_packet(
   const size_t actuator_bytes = N * sizeof(AbortActuatorLocation);
   const size_t pt_count_size = sizeof(AbortPTSectionHeader);
   const size_t pt_entries_bytes = X * sizeof(AbortPTLocation);
-  const size_t body_size = config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes;
+  const size_t trailer_size = 1u;  // enable_serial_printing
+  const size_t body_size = config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes + trailer_size;
   const size_t total_size = header_size + body_size;
 
   if (buffer_size < total_size) {
@@ -398,7 +400,10 @@ size_t create_actuator_config_packet(
 
   if (X) {
     memcpy(ptr, abort_pts.data(), pt_entries_bytes);
+    ptr += pt_entries_bytes;
   }
+
+  *ptr = enable_serial_printing;
 
   return total_size;
 }
@@ -407,12 +412,14 @@ bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
                                   PacketHeader &header_out,
                                   uint8_t &is_abort_controller_out,
                                   std::vector<AbortActuatorLocation> &abort_actuators_out,
-                                  std::vector<AbortPTLocation> &abort_pts_out) {
+                                  std::vector<AbortPTLocation> &abort_pts_out,
+                                  uint8_t &enable_serial_printing_out) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t config_header_size = sizeof(ActuatorConfigPacket);
   const size_t pt_count_size = sizeof(AbortPTSectionHeader);
+  const size_t trailer_size = 1u;  // enable_serial_printing
 
-  if (!buffer || buffer_size < header_size + config_header_size + pt_count_size) {
+  if (!buffer || buffer_size < header_size + config_header_size + pt_count_size + trailer_size) {
     return false;
   }
 
@@ -429,7 +436,7 @@ bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
 
   const size_t N = config.num_abort_actuators;
   const size_t actuator_bytes = N * sizeof(AbortActuatorLocation);
-  const size_t min_size_after_config = actuator_bytes + pt_count_size;
+  const size_t min_size_after_config = actuator_bytes + pt_count_size + trailer_size;
   if (buffer_size < header_size + config_header_size + min_size_after_config) {
     return false;
   }
@@ -450,7 +457,7 @@ bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
 
   const size_t X = pt_header.num_abort_pts;
   const size_t pt_entries_bytes = X * sizeof(AbortPTLocation);
-  const size_t expected_total = header_size + config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes;
+  const size_t expected_total = header_size + config_header_size + actuator_bytes + pt_count_size + pt_entries_bytes + trailer_size;
   if (buffer_size < expected_total) {
     return false;
   }
@@ -462,8 +469,10 @@ bool parse_actuator_config_packet(const uint8_t *buffer, size_t buffer_size,
   if (X) {
     abort_pts_out.resize(X);
     memcpy(abort_pts_out.data(), ptr, pt_entries_bytes);
+    ptr += pt_entries_bytes;
   }
 
+  enable_serial_printing_out = *ptr;
   is_abort_controller_out = config.is_abort_controller;
   header_out = hdr;
   return true;

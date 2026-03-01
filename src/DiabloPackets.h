@@ -197,6 +197,7 @@ struct __attribute__((packed)) PWMActuatorCommand {
  * - N x AbortActuatorLocation (7 bytes each)
  * - 1 byte: num_abort_pts (X)
  * - X x AbortPTLocation (9 bytes each)
+ * - 1 byte: enable_serial_printing
  */
 struct __attribute__((packed)) ActuatorConfigPacket {
   uint8_t is_abort_controller;  // 1 if this board is the abort controller, 0 otherwise

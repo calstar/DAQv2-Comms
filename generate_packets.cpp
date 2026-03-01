@@ -148,7 +148,8 @@ enum class SensorConfigReferenceVoltage : uint8_t {
 inline std::vector<uint8_t> make_sensor_config(uint8_t version, uint32_t timestamp,
                                                const std::vector<uint8_t> &sensor_ids,
                                                uint8_t reference_voltage,
-                                               bool necessary_for_abort, uint32_t controller_ip = 0)
+                                               bool necessary_for_abort, uint32_t controller_ip = 0,
+                                               uint8_t enable_serial_printing = 0)
 {
     std::vector<uint8_t> pkt;
     append_header(pkt, SENSOR_CONFIG, version, timestamp);
@@ -164,6 +165,8 @@ inline std::vector<uint8_t> make_sensor_config(uint8_t version, uint32_t timesta
     append<uint8_t>(pkt, static_cast<uint8_t>(necessary_for_abort));
     if (necessary_for_abort)
         append<uint32_t>(pkt, controller_ip);
+
+    append<uint8_t>(pkt, enable_serial_printing);
 
     return pkt;
 }
