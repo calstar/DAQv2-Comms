@@ -146,6 +146,40 @@ struct SensorDataChunkCollection {
 };
 
 //==============================================================================
+// Sensor Config
+//==============================================================================
+
+/**
+ * @brief Fixed-size header of a Sensor Config packet.
+ *
+ * Full packet layout (after standard PacketHeader):
+ * - This struct (1 byte): num_sensors (N)
+ * - N x uint8_t sensor_id
+ * - uint8_t reference_voltage
+ * - uint8_t necessary_for_abort (0 or 1)
+ * - If necessary_for_abort: uint32_t controller_ip (4 bytes)
+ * - uint8_t enable_serial_printing
+ */
+struct __attribute__((packed)) SensorConfigPacket {
+  uint8_t num_sensors;
+};
+
+/**
+ * @brief High-level representation of a parsed Sensor Config payload.
+ *
+ * @note This is NOT a packed struct; it is used for collecting / returning
+ *       sensor config fields in a convenient form (similar in spirit to
+ *       SensorDataChunkCollection).
+ */
+struct SensorConfigData {
+  std::vector<uint8_t> sensor_ids;
+  uint8_t reference_voltage;
+  bool necessary_for_abort;
+  uint32_t controller_ip;
+  uint8_t enable_serial_printing;
+};
+
+//==============================================================================
 // Actuator Command
 //==============================================================================
 

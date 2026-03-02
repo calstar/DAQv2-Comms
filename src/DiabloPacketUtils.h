@@ -64,7 +64,28 @@ create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &chunks, 
  */
 size_t create_abort_done_packet(uint8_t *buffer, size_t buffer_size);
 
-// Add declarations for other packets the boards will create...
+/**
+ * @brief Creates a complete Sensor Config packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + num_sensors (1B) + N sensor_ids (1B each) +
+ * reference_voltage (1B) + necessary_for_abort (1B) +
+ * [controller_ip (4B) if necessary_for_abort] + enable_serial_printing (1B).
+ *
+ * @param sensor_ids List of sensor IDs to include in the config.
+ * @param reference_voltage ADC reference voltage selection.
+ * @param necessary_for_abort Whether this board's sensors are needed for abort.
+ * @param controller_ip IP of the abort controller (only written when necessary_for_abort is true).
+ * @param enable_serial_printing 1 to enable serial printing, 0 to disable.
+ * @param buffer The output buffer to write the packet into.
+ * @param buffer_size The size of the provided buffer.
+ * @return The total size of the created packet, or 0 on error.
+ */
+size_t create_sensor_config_packet(const std::vector<uint8_t> &sensor_ids,
+                                   uint8_t reference_voltage,
+                                   bool necessary_for_abort,
+                                   uint32_t controller_ip,
+                                   uint8_t enable_serial_printing,
+                                   uint8_t *buffer, size_t buffer_size);
 
 /**
  * @brief Creates a complete Actuator Command packet in the provided buffer.
@@ -121,6 +142,22 @@ bool parse_abort_done_packet(const uint8_t *buffer, size_t buffer_size,
 bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
                                    PacketHeader &header_out,
                                    std::vector<ActuatorCommand> &commands_out);
+
+/**
+ * @brief Parses a Sensor Config packet from buffer.
+ *
+ * Mirrors the on-wire format produced by create_sensor_config_packet.
+ * If necessary_for_abort is false the controller_ip_out is set to 0.
+ *
+ * @return true on success, false on error (type/size mismatch or buffer too small).
+ */
+bool parse_sensor_config_packet(const uint8_t *buffer, size_t buffer_size,
+                                PacketHeader &header_out,
+                                std::vector<uint8_t> &sensor_ids_out,
+                                uint8_t &reference_voltage_out,
+                                bool &necessary_for_abort_out,
+                                uint32_t &controller_ip_out,
+                                uint8_t &enable_serial_printing_out);
 
 /**
  * @brief Creates a complete PWM Actuator Command packet in the provided buffer.

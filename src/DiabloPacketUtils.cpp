@@ -347,6 +347,134 @@ bool parse_pwm_actuator_packet(const uint8_t *buffer, size_t buffer_size,
   return true;
 }
 
+size_t create_sensor_config_packet(const std::vector<uint8_t> &sensor_ids,
+                                   uint8_t reference_voltage,
+                                   bool necessary_for_abort,
+                                   uint32_t controller_ip,
+                                   uint8_t enable_serial_printing,
+                                   uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t num_sensors = sensor_ids.size();
+
+  if (num_sensors > 255) {
+    return 0;
+  }
+
+  const size_t body_size = 1u                              // num_sensors
+                         + num_sensors                     // sensor_ids
+                         + 1u                              // reference_voltage
+                         + 1u                              // necessary_for_abort
+                         + (necessary_for_abort ? 4u : 0u) // controller_ip (conditional)
+                         + 1u;                             // enable_serial_printing
+  const size_t total_size = header_size + body_size;
+
+  if (buffer_size < total_size) {
+    return 0;
+  }
+
+  PacketHeader header;
+  header.packet_type = PacketType::SENSOR_CONFIG;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = millis();
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+
+  *ptr = static_cast<uint8_t>(num_sensors);
+  ptr += 1;
+
+  if (num_sensors) {
+    memcpy(ptr, sensor_ids.data(), num_sensors);
+    ptr += num_sensors;
+  }
+
+  *ptr = reference_voltage;
+  ptr += 1;
+
+  *ptr = necessary_for_abort ? 1u : 0u;
+  ptr += 1;
+
+  if (necessary_for_abort) {
+    memcpy(ptr, &controller_ip, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+  }
+
+  *ptr = enable_serial_printing;
+
+  return total_size;
+}
+
+bool parse_sensor_config_packet(const uint8_t *buffer, size_t buffer_size,
+                                PacketHeader &header_out,
+                                std::vector<uint8_t> &sensor_ids_out,
+                                uint8_t &reference_voltage_out,
+                                bool &necessary_for_abort_out,
+                                uint32_t &controller_ip_out,
+                                uint8_t &enable_serial_printing_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  // Minimum body: num_sensors(1) + ref_voltage(1) + necessary_for_abort(1) + enable_serial(1)
+  const size_t min_body = 4u;
+
+  if (!buffer || buffer_size < header_size + min_body) {
+    return false;
+  }
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::SENSOR_CONFIG) {
+    return false;
+  }
+
+  const uint8_t *ptr = buffer + header_size;
+
+  const uint8_t num_sensors = *ptr;
+  ptr += 1;
+
+  // Verify remaining bytes can hold sensor_ids + fixed tail
+  // fixed tail = ref_voltage(1) + necessary_for_abort(1) + enable_serial(1) = 3
+  const size_t min_remaining = static_cast<size_t>(num_sensors) + 3u;
+  if (buffer_size < header_size + 1u + min_remaining) {
+    return false;
+  }
+
+  sensor_ids_out.clear();
+  if (num_sensors) {
+    sensor_ids_out.resize(num_sensors);
+    memcpy(sensor_ids_out.data(), ptr, num_sensors);
+    ptr += num_sensors;
+  }
+
+  reference_voltage_out = *ptr;
+  ptr += 1;
+
+  const uint8_t abort_flag = *ptr;
+  ptr += 1;
+  necessary_for_abort_out = (abort_flag != 0);
+
+  if (necessary_for_abort_out) {
+    // Need 4 more bytes for controller_ip + 1 for enable_serial_printing
+    const size_t consumed = static_cast<size_t>(ptr - buffer);
+    if (buffer_size < consumed + sizeof(uint32_t) + 1u) {
+      return false;
+    }
+    memcpy(&controller_ip_out, ptr, sizeof(uint32_t));
+    ptr += sizeof(uint32_t);
+  } else {
+    controller_ip_out = 0;
+  }
+
+  // Final byte: enable_serial_printing
+  const size_t consumed = static_cast<size_t>(ptr - buffer);
+  if (buffer_size < consumed + 1u) {
+    return false;
+  }
+  enable_serial_printing_out = *ptr;
+
+  header_out = hdr;
+  return true;
+}
+
 size_t create_actuator_config_packet(
     uint8_t is_abort_controller,
     const std::vector<AbortActuatorLocation> &abort_actuators,
