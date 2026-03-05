@@ -266,4 +266,26 @@ struct __attribute__((packed)) AbortPTLocation {
   uint8_t sensor_id;
   uint32_t pressure_threshold_adc;  // Pressure threshold as ADC code
 };
+
+//==============================================================================
+// Self Test
+//==============================================================================
+
+/**
+ * @brief Body of a Self Test packet.
+ * @note The actual packet will have this struct followed by N SelfTestResults.
+ */
+struct __attribute__((packed)) SelfTestPacket {
+  uint8_t num_sensors;
+  // Followed by 'num_sensors' instances of SelfTestResult
+};
+
+/**
+ * @brief Represents a self test result for a single sensor.
+ */
+struct __attribute__((packed)) SelfTestResult {
+  uint8_t sensor_id;
+  uint8_t result; // boolean, 1 = good, 0 = bad
+};
+
 } // namespace Diablo

@@ -100,6 +100,19 @@ size_t create_sensor_config_packet(const std::vector<uint8_t> &sensor_ids,
 size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &commands,
                                       uint8_t *buffer, size_t buffer_size);
 
+/**
+ * @brief Creates a complete Self Test packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + SelfTestPacket + N SelfTestResult.
+ *
+ * @param results The list of self test results to serialize.
+ * @param buffer The output buffer to write the packet into.
+ * @param buffer_size The size of the provided buffer.
+ * @return The total size of the created packet, or 0 on error.
+ */
+size_t create_self_test_packet(const std::vector<SelfTestResult> &results,
+                               uint8_t *buffer, size_t buffer_size);
+
 //==============================================================================
 // PACKET DESERIALIZATION (uint8_t* Buffer -> Struct)
 //==============================================================================
@@ -142,6 +155,14 @@ bool parse_abort_done_packet(const uint8_t *buffer, size_t buffer_size,
 bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
                                    PacketHeader &header_out,
                                    std::vector<ActuatorCommand> &commands_out);
+
+/**
+ * @brief Parses a Self Test packet from buffer.
+ * @return true on success, false on error.
+ */
+bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
+                            PacketHeader &header_out,
+                            std::vector<SelfTestResult> &results_out);
 
 /**
  * @brief Parses a Sensor Config packet from buffer.

@@ -150,6 +150,47 @@ size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &comman
   return total_size;
 }
 
+size_t create_self_test_packet(const std::vector<SelfTestResult> &results,
+                               uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(SelfTestPacket);
+  const size_t num_sensors = results.size();
+
+  if (num_sensors > 255) {
+    return 0; // num_sensors must be <= 255
+  }
+
+  const size_t results_bytes = num_sensors * sizeof(SelfTestResult);
+  const size_t total_size = header_size + body_size + results_bytes;
+
+  if (buffer_size < total_size) {
+    return 0; // Buffer too small
+  }
+
+  // Header
+  PacketHeader header;
+  header.packet_type = PacketType::SELF_TEST;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = millis();
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+
+  // Body
+  SelfTestPacket body;
+  body.num_sensors = static_cast<uint8_t>(num_sensors);
+  memcpy(ptr, &body, body_size);
+  ptr += body_size;
+
+  // Results array
+  if (num_sensors) {
+    memcpy(ptr, results.data(), results_bytes);
+  }
+
+  return total_size;
+}
+
 bool parse_board_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
                                   PacketHeader &header_out,
                                   BoardHeartbeatPacket &data_out) {
@@ -270,6 +311,36 @@ bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
   if (body.num_commands) {
     commands_out.resize(body.num_commands);
     memcpy(commands_out.data(), ptr, commands_bytes);
+  }
+
+  header_out = hdr;
+  return true;
+}
+
+bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
+                            PacketHeader &header_out,
+                            std::vector<SelfTestResult> &results_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(SelfTestPacket);
+  if (!buffer || buffer_size < header_size + body_size) return false;
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::SELF_TEST) return false;
+
+  const uint8_t *ptr = buffer + header_size;
+  SelfTestPacket body;
+  memcpy(&body, ptr, body_size);
+  ptr += body_size;
+
+  const size_t results_bytes = static_cast<size_t>(body.num_sensors) * sizeof(SelfTestResult);
+  const size_t expected_size = header_size + body_size + results_bytes;
+  if (buffer_size < expected_size) return false;
+
+  results_out.clear();
+  if (body.num_sensors) {
+    results_out.resize(body.num_sensors);
+    memcpy(results_out.data(), ptr, results_bytes);
   }
 
   header_out = hdr;

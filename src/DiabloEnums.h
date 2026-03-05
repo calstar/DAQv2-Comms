@@ -17,7 +17,9 @@ enum class PacketType : uint8_t {
   ABORT = 7,
   ABORT_DONE = 8,
   CLEAR_ABORT = 9,
-  PWM_ACTUATOR_COMMAND = 10
+  PWM_ACTUATOR_COMMAND = 10,
+  NO_CONNECTION_ABORT = 11,
+  SELF_TEST = 12
 };
 
 /**
