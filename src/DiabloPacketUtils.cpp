@@ -150,7 +150,8 @@ size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &comman
   return total_size;
 }
 
-size_t create_self_test_packet(const std::vector<SelfTestResult> &results,
+size_t create_self_test_packet(uint8_t adc_good,
+                               const std::vector<SelfTestResult> &results,
                                uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_size = sizeof(SelfTestPacket);
@@ -177,8 +178,9 @@ size_t create_self_test_packet(const std::vector<SelfTestResult> &results,
   memcpy(ptr, &header, header_size);
   ptr += header_size;
 
-  // Body
+  // Body: adc_good byte first, then num_sensors
   SelfTestPacket body;
+  body.adc_good = adc_good;
   body.num_sensors = static_cast<uint8_t>(num_sensors);
   memcpy(ptr, &body, body_size);
   ptr += body_size;
@@ -319,6 +321,7 @@ bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
 
 bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
                             PacketHeader &header_out,
+                            uint8_t &adc_good_out,
                             std::vector<SelfTestResult> &results_out) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_size = sizeof(SelfTestPacket);
@@ -336,6 +339,8 @@ bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
   const size_t results_bytes = static_cast<size_t>(body.num_sensors) * sizeof(SelfTestResult);
   const size_t expected_size = header_size + body_size + results_bytes;
   if (buffer_size < expected_size) return false;
+
+  adc_good_out = body.adc_good;
 
   results_out.clear();
   if (body.num_sensors) {

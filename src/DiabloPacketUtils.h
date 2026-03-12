@@ -22,7 +22,7 @@ namespace Diablo {
  * This is a fixed-size packet sent periodically by a board to the server to
  * indicate it is online and operational.
  *
- * @param data The heartbeat data to encode (board type, state, etc.).
+ * @param data The heartbeat data to encode (firmware SHA-256 hash, board ID, state, etc.).
  * @param buffer The output buffer to write the final packet into.
  * @param buffer_size The total size of the output buffer, used for safety
  * checks.
@@ -103,14 +103,16 @@ size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &comman
 /**
  * @brief Creates a complete Self Test packet in the provided buffer.
  *
- * Packet layout: PacketHeader + SelfTestPacket + N SelfTestResult.
+ * Packet layout: PacketHeader + SelfTestPacket (adc_good + num_sensors) + N SelfTestResult.
  *
- * @param results The list of self test results to serialize.
- * @param buffer The output buffer to write the packet into.
+ * @param adc_good   1 if the TDAC self-test passed (ADC is good), 0 if it failed.
+ * @param results    The list of per-sensor self-test results to serialize.
+ * @param buffer     The output buffer to write the packet into.
  * @param buffer_size The size of the provided buffer.
  * @return The total size of the created packet, or 0 on error.
  */
-size_t create_self_test_packet(const std::vector<SelfTestResult> &results,
+size_t create_self_test_packet(uint8_t adc_good,
+                               const std::vector<SelfTestResult> &results,
                                uint8_t *buffer, size_t buffer_size);
 
 //==============================================================================
@@ -158,10 +160,12 @@ bool parse_actuator_command_packet(const uint8_t *buffer, size_t buffer_size,
 
 /**
  * @brief Parses a Self Test packet from buffer.
+ * @param adc_good_out Set to 1 if the TDAC self-test passed, 0 if it failed.
  * @return true on success, false on error.
  */
 bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
                             PacketHeader &header_out,
+                            uint8_t &adc_good_out,
                             std::vector<SelfTestResult> &results_out);
 
 /**

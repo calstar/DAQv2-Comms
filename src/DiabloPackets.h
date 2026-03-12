@@ -23,7 +23,7 @@ struct __attribute__((packed)) PacketHeader {
  * @brief Body of a Board Heartbeat packet. Sent from a board to the server.
  */
 struct __attribute__((packed)) BoardHeartbeatPacket {
-    BoardType board_type;
+    uint8_t firmware_hash[32]; // SHA-256 hash of the firmware binary
 	  uint8_t board_id;
     EngineState engine_state;
     BoardState board_state;
@@ -274,8 +274,14 @@ struct __attribute__((packed)) AbortPTLocation {
 /**
  * @brief Body of a Self Test packet.
  * @note The actual packet will have this struct followed by N SelfTestResults.
+ *
+ * On-wire layout (after PacketHeader):
+ *   adc_good   (1 byte) – 1 if TDAC self-test passed, 0 if failed
+ *   num_sensors (1 byte) – number of SelfTestResult entries that follow
+ *   N x SelfTestResult
  */
 struct __attribute__((packed)) SelfTestPacket {
+  uint8_t adc_good;   // 1 = ADC passed TDAC self-test, 0 = failed
   uint8_t num_sensors;
   // Followed by 'num_sensors' instances of SelfTestResult
 };

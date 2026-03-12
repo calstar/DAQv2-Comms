@@ -33,19 +33,6 @@ enum class BoardState : uint8_t {
 };
 
 /**
- * @brief Defines the physical type of a board.
- * Used in the Board Heartbeat packet.
- */
-enum class BoardType : uint8_t {
-  UNKNOWN = 0,
-  PRESSURE_TRANSDUCER = 1,
-  LOAD_CELL = 2,
-  RTD = 3,
-  THERMOCOUPLE = 4,
-  ACTUATOR = 5
-};
-
-/**
  * @brief Defines the overall state of the engine system.
  * This is communicated from the server to the boards.
  */
