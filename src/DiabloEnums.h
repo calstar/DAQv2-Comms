@@ -28,8 +28,14 @@ enum class PacketType : uint8_t {
 enum class BoardState : uint8_t {
   SETUP = 1,
   ACTIVE = 2,
-  ABORT = 3,
-  ABORT_DONE = 4
+  CONNECTION_LOSS_DETECTED = 3,
+  NO_CONNECTION_ABORT = 4,
+  NO_CONN_ABORT_FOLLOWER = 5,
+  PT_ABORT = 6,
+  NO_PT_ABORT = 7,
+  ABORT_FINISHED = 8,
+  STANDALONE_ABORT = 9,
+  SELF_TEST = 10
 };
 
 /**
