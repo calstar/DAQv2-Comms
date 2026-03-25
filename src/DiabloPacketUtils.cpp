@@ -11,6 +11,7 @@ namespace Diablo {
 
 
 size_t create_board_heartbeat_packet(const BoardHeartbeatPacket &data,
+                                     uint32_t timestamp_ms,
                                      uint8_t *buffer, size_t buffer_size) {
   // Calculate the total packet size
   const size_t header_size = sizeof(PacketHeader);
@@ -26,7 +27,7 @@ size_t create_board_heartbeat_packet(const BoardHeartbeatPacket &data,
   PacketHeader header;
   header.packet_type = PacketType::BOARD_HEARTBEAT;
   header.version = DIABLO_COMMS_VERSION; // Current protocol version
-  header.timestamp = millis(); // Use Arduino millis() for timestamp (ESP32 compatible) (ESP32 compatible)
+  header.timestamp = timestamp_ms;
   
   // Copy header to buffer
   memcpy(buffer, &header, header_size);
@@ -38,6 +39,7 @@ size_t create_board_heartbeat_packet(const BoardHeartbeatPacket &data,
 }
 
 size_t create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &chunks, const uint8_t num_sensors,
+                                uint32_t timestamp_ms,
                                 uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_header_size = sizeof(SensorDataPacket);
@@ -56,7 +58,7 @@ size_t create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &c
   PacketHeader header;
   header.packet_type = PacketType::SENSOR_DATA;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   // Write header
   uint8_t *ptr = buffer;
@@ -88,7 +90,8 @@ size_t create_sensor_data_packet(const std::vector<SensorDataChunkCollection> &c
   return total_size;
 }
 
-size_t create_abort_done_packet(uint8_t *buffer, size_t buffer_size) {
+size_t create_abort_done_packet(uint32_t timestamp_ms,
+                                uint8_t *buffer, size_t buffer_size) {
   // Calculate the total packet size (header only, no body)
   const size_t header_size = sizeof(PacketHeader);
   
@@ -101,7 +104,7 @@ size_t create_abort_done_packet(uint8_t *buffer, size_t buffer_size) {
   PacketHeader header;
   header.packet_type = PacketType::ABORT_DONE;
   header.version = 1; // Current protocol version
-  header.timestamp = millis(); // Use Arduino millis() for timestamp (ESP32 compatible)
+  header.timestamp = timestamp_ms;
   
   // Copy header to buffer
   memcpy(buffer, &header, header_size);
@@ -110,6 +113,7 @@ size_t create_abort_done_packet(uint8_t *buffer, size_t buffer_size) {
 }
 
 size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &commands,
+                                      uint32_t timestamp_ms,
                                       uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_size = sizeof(ActuatorCommandPacket);
@@ -130,7 +134,7 @@ size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &comman
   PacketHeader header;
   header.packet_type = PacketType::ACTUATOR_COMMAND;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   uint8_t *ptr = buffer;
   memcpy(ptr, &header, header_size);
@@ -152,6 +156,7 @@ size_t create_actuator_command_packet(const std::vector<ActuatorCommand> &comman
 
 size_t create_self_test_packet(uint8_t adc_good,
                                const std::vector<SelfTestResult> &results,
+                               uint32_t timestamp_ms,
                                uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_size = sizeof(SelfTestPacket);
@@ -172,7 +177,7 @@ size_t create_self_test_packet(uint8_t adc_good,
   PacketHeader header;
   header.packet_type = PacketType::SELF_TEST;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   uint8_t *ptr = buffer;
   memcpy(ptr, &header, header_size);
@@ -353,6 +358,7 @@ bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
 }
 
 size_t create_pwm_actuator_packet(const std::vector<PWMActuatorCommand> &commands,
+                                  uint32_t timestamp_ms,
                                   uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t body_size = sizeof(PWMActuatorCommandPacket);
@@ -373,7 +379,7 @@ size_t create_pwm_actuator_packet(const std::vector<PWMActuatorCommand> &command
   PacketHeader header;
   header.packet_type = PacketType::PWM_ACTUATOR_COMMAND;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   uint8_t *ptr = buffer;
   memcpy(ptr, &header, header_size);
@@ -428,6 +434,7 @@ size_t create_sensor_config_packet(const std::vector<uint8_t> &sensor_ids,
                                    bool necessary_for_abort,
                                    uint32_t controller_ip,
                                    uint8_t enable_serial_printing,
+                                   uint32_t timestamp_ms,
                                    uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t num_sensors = sensor_ids.size();
@@ -451,7 +458,7 @@ size_t create_sensor_config_packet(const std::vector<uint8_t> &sensor_ids,
   PacketHeader header;
   header.packet_type = PacketType::SENSOR_CONFIG;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   uint8_t *ptr = buffer;
   memcpy(ptr, &header, header_size);
@@ -556,6 +563,7 @@ size_t create_actuator_config_packet(
     const std::vector<AbortActuatorLocation> &abort_actuators,
     const std::vector<AbortPTLocation> &abort_pts,
     uint8_t enable_serial_printing,
+    uint32_t timestamp_ms,
     uint8_t *buffer, size_t buffer_size) {
   const size_t header_size = sizeof(PacketHeader);
   const size_t config_header_size = sizeof(ActuatorConfigPacket);
@@ -580,7 +588,7 @@ size_t create_actuator_config_packet(
   PacketHeader header;
   header.packet_type = PacketType::ACTUATOR_CONFIG;
   header.version = DIABLO_COMMS_VERSION;
-  header.timestamp = millis();
+  header.timestamp = timestamp_ms;
 
   uint8_t *ptr = buffer;
   memcpy(ptr, &header, header_size);

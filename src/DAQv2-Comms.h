@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Arduino.h>
-
 // Version information
 #define DIABLO_COMMS_VERSION 0 // Protocol version (uint8_t)
 
