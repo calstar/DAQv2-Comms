@@ -198,6 +198,59 @@ size_t create_self_test_packet(uint8_t adc_good,
   return total_size;
 }
 
+size_t create_environmental_data_packet(float temperature_c,
+                                        uint32_t pressure_pa,
+                                        float humidity_rh,
+                                        uint32_t timestamp_ms,
+                                        uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(EnvironmentalDataPacket);
+  const size_t total_size = header_size + body_size;
+
+  if (!buffer || buffer_size < total_size) {
+    return 0;
+  }
+
+  PacketHeader header;
+  header.packet_type = PacketType::ENVIRONMENTAL_DATA;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = timestamp_ms;
+
+  EnvironmentalDataPacket body;
+  body.temperature_c = temperature_c;
+  body.pressure_pa = pressure_pa;
+  body.humidity_rh = humidity_rh;
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+  memcpy(ptr, &body, body_size);
+  return total_size;
+}
+
+size_t create_stacklight_command_packet(const StacklightCommandPacket &data,
+                                        uint32_t timestamp_ms,
+                                        uint8_t *buffer, size_t buffer_size) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(StacklightCommandPacket);
+  const size_t total_size = header_size + body_size;
+
+  if (!buffer || buffer_size < total_size) {
+    return 0;
+  }
+
+  PacketHeader header;
+  header.packet_type = PacketType::STACKLIGHT_COMMAND;
+  header.version = DIABLO_COMMS_VERSION;
+  header.timestamp = timestamp_ms;
+
+  uint8_t *ptr = buffer;
+  memcpy(ptr, &header, header_size);
+  ptr += header_size;
+  memcpy(ptr, &data, body_size);
+  return total_size;
+}
+
 bool parse_board_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
                                   PacketHeader &header_out,
                                   BoardHeartbeatPacket &data_out) {
@@ -231,6 +284,40 @@ bool parse_server_heartbeat_packet(const uint8_t *buffer, size_t buffer_size,
   if (hdr.packet_type != PacketType::SERVER_HEARTBEAT) return false;
 
   // Read body
+  memcpy(&data_out, buffer + header_size, body_size);
+  header_out = hdr;
+  return true;
+}
+
+bool parse_environmental_data_packet(const uint8_t *buffer, size_t buffer_size,
+                                     PacketHeader &header_out,
+                                     EnvironmentalDataPacket &data_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(EnvironmentalDataPacket);
+  const size_t total_size = header_size + body_size;
+  if (!buffer || buffer_size < total_size) return false;
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::ENVIRONMENTAL_DATA) return false;
+
+  memcpy(&data_out, buffer + header_size, body_size);
+  header_out = hdr;
+  return true;
+}
+
+bool parse_stacklight_command_packet(const uint8_t *buffer, size_t buffer_size,
+                                     PacketHeader &header_out,
+                                     StacklightCommandPacket &data_out) {
+  const size_t header_size = sizeof(PacketHeader);
+  const size_t body_size = sizeof(StacklightCommandPacket);
+  const size_t total_size = header_size + body_size;
+  if (!buffer || buffer_size < total_size) return false;
+
+  PacketHeader hdr;
+  memcpy(&hdr, buffer, header_size);
+  if (hdr.packet_type != PacketType::STACKLIGHT_COMMAND) return false;
+
   memcpy(&data_out, buffer + header_size, body_size);
   header_out = hdr;
   return true;

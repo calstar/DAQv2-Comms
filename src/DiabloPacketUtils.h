@@ -126,6 +126,27 @@ size_t create_self_test_packet(uint8_t adc_good,
                                uint32_t timestamp_ms,
                                uint8_t *buffer, size_t buffer_size);
 
+/**
+ * @brief Creates a complete Environmental Data packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + EnvironmentalDataPacket (temperature float °C,
+ * pressure uint32 Pa, humidity float %RH).
+ */
+size_t create_environmental_data_packet(float temperature_c,
+                                        uint32_t pressure_pa,
+                                        float humidity_rh,
+                                        uint32_t timestamp_ms,
+                                        uint8_t *buffer, size_t buffer_size);
+
+/**
+ * @brief Creates a complete Stacklight Command packet in the provided buffer.
+ *
+ * Packet layout: PacketHeader + StacklightCommandPacket (red, yellow, green, buzzer; 1 = on).
+ */
+size_t create_stacklight_command_packet(const StacklightCommandPacket &data,
+                                        uint32_t timestamp_ms,
+                                        uint8_t *buffer, size_t buffer_size);
+
 //==============================================================================
 // PACKET DESERIALIZATION (uint8_t* Buffer -> Struct)
 //==============================================================================
@@ -178,6 +199,22 @@ bool parse_self_test_packet(const uint8_t *buffer, size_t buffer_size,
                             PacketHeader &header_out,
                             uint8_t &adc_good_out,
                             std::vector<SelfTestResult> &results_out);
+
+/**
+ * @brief Parses an Environmental Data packet from buffer.
+ * @return true on success, false on error (size/type mismatch).
+ */
+bool parse_environmental_data_packet(const uint8_t *buffer, size_t buffer_size,
+                                       PacketHeader &header_out,
+                                       EnvironmentalDataPacket &data_out);
+
+/**
+ * @brief Parses a Stacklight Command packet from buffer.
+ * @return true on success, false on error (size/type mismatch).
+ */
+bool parse_stacklight_command_packet(const uint8_t *buffer, size_t buffer_size,
+                                     PacketHeader &header_out,
+                                     StacklightCommandPacket &data_out);
 
 /**
  * @brief Parses a Sensor Config packet from buffer.

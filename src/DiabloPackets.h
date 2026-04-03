@@ -294,4 +294,33 @@ struct __attribute__((packed)) SelfTestResult {
   uint8_t result; // boolean, 1 = good, 0 = bad
 };
 
+//==============================================================================
+// Environmental Data
+//==============================================================================
+
+/**
+ * @brief Body of an Environmental Data packet (after PacketHeader).
+ * Temperature in degrees Celsius, absolute pressure in Pa, relative humidity in %RH.
+ */
+struct __attribute__((packed)) EnvironmentalDataPacket {
+  float temperature_c;
+  uint32_t pressure_pa;
+  float humidity_rh;
+};
+
+//==============================================================================
+// Stacklight Command
+//==============================================================================
+
+/**
+ * @brief Body of a stacklight command packet (after PacketHeader).
+ * Order: red, yellow, green, buzzer. Each byte is 1 = on, 0 = off.
+ */
+struct __attribute__((packed)) StacklightCommandPacket {
+  uint8_t red;
+  uint8_t yellow;
+  uint8_t green;
+  uint8_t buzzer;
+};
+
 } // namespace Diablo
